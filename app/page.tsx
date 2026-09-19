@@ -364,7 +364,7 @@ export default function Page() {
           nudgeSignal={nudgeSignal}
           nudgeDir={nudgeDirRef.current}
         />
-        <RhythmOverlay beatsRef={beatsRef} clock={clock} speedPxPerSec={speedPxPerSec} playing={playing} />
+        <RhythmOverlay beatsRef={beatsRef} clock={clock} speedPxPerSec={speedPxPerSec} />
       </main>
 
       <div className="editor-row">

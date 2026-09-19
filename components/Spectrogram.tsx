@@ -21,7 +21,8 @@ export default function Spectrogram({ clock, playing, beatsRef }: Props) {
   const [enabled, setEnabled] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const mediaRef = useRef<HTMLMediaElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const urlRef = useRef<string | null>(null);
   const contextRef = useRef<AudioContext | null>(null);
@@ -30,6 +31,9 @@ export default function Spectrogram({ clock, playing, beatsRef }: Props) {
   const rafRef = useRef<number | null>(null);
   const energyHistoryRef = useRef<number[]>([]);
 
+  // Retourne l'élément média courant (vidéo ou audio) selon le type de source.
+  const getMedia = () => videoRef.current || audioRef.current;
+
   useEffect(() => () => {
     if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
     if (urlRef.current) URL.revokeObjectURL(urlRef.current);
@@ -37,14 +41,14 @@ export default function Spectrogram({ clock, playing, beatsRef }: Props) {
   }, []);
 
   useEffect(() => {
-    const media = mediaRef.current;
+    const media = getMedia();
     if (!media || !sourceName) return;
     if (playing) {
       void media.play().catch(() => setError("La lecture de la source doit être autorisée par le navigateur."));
     } else {
       media.pause();
     }
-  }, [playing, sourceName]);
+  }, [playing, sourceName, sourceType]);
 
   const draw = () => {
     const canvas = canvasRef.current;
@@ -95,7 +99,7 @@ export default function Spectrogram({ clock, playing, beatsRef }: Props) {
   };
 
   const setupAnalyser = async () => {
-    const media = mediaRef.current;
+    const media = getMedia();
     if (!media || analyserRef.current) return;
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     if (!AudioContextClass) {
@@ -137,9 +141,10 @@ export default function Spectrogram({ clock, playing, beatsRef }: Props) {
     setSourceType(file.type.startsWith("video/") ? "video" : "audio");
     setError(null);
     requestAnimationFrame(() => {
-      if (mediaRef.current && urlRef.current) {
-        mediaRef.current.src = urlRef.current;
-        mediaRef.current.load();
+      const media = getMedia();
+      if (media && urlRef.current) {
+        media.src = urlRef.current;
+        media.load();
       }
     });
     event.target.value = "";
@@ -154,10 +159,11 @@ export default function Spectrogram({ clock, playing, beatsRef }: Props) {
     energyHistoryRef.current = [];
     beatsRef.current = [];
 
-    if (mediaRef.current) {
-      mediaRef.current.pause();
-      mediaRef.current.removeAttribute("src");
-      mediaRef.current.load();
+    const media = getMedia();
+    if (media) {
+      media.pause();
+      media.removeAttribute("src");
+      media.load();
     }
     if (urlRef.current) URL.revokeObjectURL(urlRef.current);
     urlRef.current = null;
@@ -183,8 +189,8 @@ export default function Spectrogram({ clock, playing, beatsRef }: Props) {
         {sourceName && <span className="spectrogram-file">{sourceName}</span>}
         {sourceName && <button type="button" onClick={resetSource}>Retirer</button>}
       </div>
-      {sourceType === "video" && <video ref={mediaRef as React.RefObject<HTMLVideoElement>} className="spectrogram-video" controls playsInline onPlay={() => void setupAnalyser()} />}
-      {sourceType === "audio" && <audio ref={mediaRef as React.RefObject<HTMLAudioElement>} className="spectrogram-audio" controls onPlay={() => void setupAnalyser()} />}
+      {sourceType === "video" && <video key={sourceName} ref={videoRef} className="spectrogram-video" controls playsInline onPlay={() => void setupAnalyser()} />}
+      {sourceType === "audio" && <audio key={sourceName} ref={audioRef} className="spectrogram-audio" controls onPlay={() => void setupAnalyser()} />}
       {!sourceName && <p className="spectrogram-empty">Importe une musique ou une vidéo pour analyser ses attaques sonores.</p>}
       {enabled && sourceName && <canvas ref={canvasRef} className="spectrogram-canvas" aria-label="Visualisation du spectre audio" />}
       {error && <p className="recorder-error" role="alert">{error}</p>}

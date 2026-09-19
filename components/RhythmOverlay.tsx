@@ -9,21 +9,18 @@ type Props = {
   beatsRef: React.MutableRefObject<BeatMark[]>;
   clock: MusicClock;
   speedPxPerSec: number;
-  playing: boolean;
 };
 
 // Filigrane de rythme au-dessus de la zone du prompteur : dessine les attaques
 // détectées par le Spectrogram comme lignes verticales, positionnées par temps
 // relatif à la clock (même logique que le surlignage des syllabes).
-export default function RhythmOverlay({ beatsRef, clock, speedPxPerSec, playing }: Props) {
+export default function RhythmOverlay({ beatsRef, clock, speedPxPerSec }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number | null>(null);
 
-  // Miroirs pour la boucle rAF.
+  // Miroir pour la boucle rAF.
   const speedRef = useRef(speedPxPerSec);
   speedRef.current = speedPxPerSec;
-  const playingRef = useRef(playing);
-  playingRef.current = playing;
 
   useEffect(() => {
     const canvas = canvasRef.current;
