@@ -9,6 +9,7 @@ import Countdown from "@/components/Countdown";
 import Recorder from "@/components/Recorder";
 import SplashScreen from "@/components/SplashScreen";
 import Spectrogram from "@/components/Spectrogram";
+import RhythmOverlay, { type BeatMark } from "@/components/RhythmOverlay";
 import { MusicClock, SIGNATURES, pxPerSecond, type Signature } from "@/lib/music";
 
 // Clé de persistance des réglages.
@@ -118,6 +119,9 @@ export default function Page() {
   const [resetSignal, setResetSignal] = useState(0);
   const [nudgeSignal, setNudgeSignal] = useState(0);
   const nudgeDirRef = useRef(1);
+
+  // Attaques sonores détectées par le spectrogramme, partagées avec le filigrane.
+  const beatsRef = useRef<BeatMark[]>([]);
 
   // Compte à rebours avant play (3 → 2 → 1). null = inactif.
   const [countdown, setCountdown] = useState<number | null>(null);
@@ -360,6 +364,7 @@ export default function Page() {
           nudgeSignal={nudgeSignal}
           nudgeDir={nudgeDirRef.current}
         />
+        <RhythmOverlay beatsRef={beatsRef} clock={clock} speedPxPerSec={speedPxPerSec} playing={playing} />
       </main>
 
       <div className="editor-row">
@@ -391,7 +396,7 @@ export default function Page() {
         onRequestStart={handleRecordingStart}
       />
 
-      <Spectrogram clock={clock} playing={playing} />
+      <Spectrogram clock={clock} playing={playing} beatsRef={beatsRef} />
 
       <Controls
         fontFamily={fontFamily}

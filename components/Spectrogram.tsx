@@ -2,32 +2,33 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { MusicClock } from "@/lib/music";
+import type { BeatMark } from "@/components/RhythmOverlay";
 
 type Props = {
   clock: MusicClock;
   playing: boolean;
+  beatsRef: React.MutableRefObject<BeatMark[]>;
 };
 
-type BeatMark = { time: number; strength: number };
-
 const FFT_SIZE = 1024;
-const MAX_MARKS = 80;
+const MAX_MARKS = 200;
+const ENERGY_HISTORY = 30;
+const SENSITIVITY = 2.2;
 
-export default function Spectrogram({ clock, playing }: Props) {
+export default function Spectrogram({ clock, playing, beatsRef }: Props) {
   const [sourceName, setSourceName] = useState("");
   const [sourceType, setSourceType] = useState<"audio" | "video" | null>(null);
   const [enabled, setEnabled] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [marks, setMarks] = useState<BeatMark[]>([]);
 
-  const mediaRef = useRef<HTMLMediaElement>(null);
+  const mediaRef = useRef<HTMLMediaElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const urlRef = useRef<string | null>(null);
   const contextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
   const rafRef = useRef<number | null>(null);
-  const previousEnergyRef = useRef(0);
+  const energyHistoryRef = useRef<number[]>([]);
 
   useEffect(() => () => {
     if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
@@ -49,8 +50,8 @@ export default function Spectrogram({ clock, playing }: Props) {
     const canvas = canvasRef.current;
     const analyser = analyserRef.current;
     if (!canvas || !analyser) return;
-    const context = canvas.getContext("2d");
-    if (!context) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
     const width = canvas.clientWidth * window.devicePixelRatio;
     const height = canvas.clientHeight * window.devicePixelRatio;
@@ -61,23 +62,35 @@ export default function Spectrogram({ clock, playing }: Props) {
 
     const values = new Uint8Array(analyser.frequencyBinCount);
     analyser.getByteFrequencyData(values);
-    const column = context.getImageData(2, 0, canvas.width - 2, canvas.height);
-    context.putImageData(column, 0, 0);
 
+    const column = ctx.getImageData(2, 0, canvas.width - 2, canvas.height);
+    ctx.putImageData(column, 0, 0);
     for (let y = 0; y < canvas.height; y++) {
       const index = Math.floor((1 - y / canvas.height) * values.length);
       const value = values[index] ?? 0;
       const hue = 205 + value * 0.35;
-      context.fillStyle = `hsl(${hue}, 85%, ${18 + value * 0.35}%)`;
-      context.fillRect(canvas.width - 2, y, 2, 1);
+      ctx.fillStyle = `hsl(${hue}, 85%, ${18 + value * 0.35}%)`;
+      ctx.fillRect(canvas.width - 2, y, 2, 1);
     }
 
-    const energy = values.reduce((sum, value) => sum + value, 0) / values.length;
-    if (energy > 105 && energy > previousEnergyRef.current * 1.2) {
-      const time = clock.rawElapsedMs() / 1000;
-      setMarks((current) => [...current, { time, strength: energy }].slice(-MAX_MARKS));
+    const energy = values.reduce((sum, v) => sum + v, 0) / values.length;
+    const history = energyHistoryRef.current;
+    history.push(energy);
+    if (history.length > ENERGY_HISTORY) history.shift();
+
+    if (history.length >= 10) {
+      const mean = history.reduce((s, v) => s + v, 0) / history.length;
+      const variance = history.reduce((s, v) => s + (v - mean) ** 2, 0) / history.length;
+      const std = Math.sqrt(variance);
+      const threshold = mean + std * SENSITIVITY;
+
+      if (energy > threshold && energy > mean * 1.15) {
+        const time = clock.rawElapsedMs() / 1000;
+        beatsRef.current.push({ time, strength: energy });
+        if (beatsRef.current.length > MAX_MARKS) beatsRef.current.shift();
+      }
     }
-    previousEnergyRef.current = energy;
+
     rafRef.current = requestAnimationFrame(draw);
   };
 
@@ -110,20 +123,37 @@ export default function Spectrogram({ clock, playing }: Props) {
       setError("Sélectionne un fichier audio ou vidéo.");
       return;
     }
+    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    void contextRef.current?.close();
+    contextRef.current = null;
+    analyserRef.current = null;
+    sourceRef.current = null;
+    energyHistoryRef.current = [];
+    beatsRef.current = [];
+
     if (urlRef.current) URL.revokeObjectURL(urlRef.current);
     urlRef.current = URL.createObjectURL(file);
     setSourceName(file.name);
     setSourceType(file.type.startsWith("video/") ? "video" : "audio");
-    setMarks([]);
     setError(null);
-    if (mediaRef.current) {
-      mediaRef.current.src = urlRef.current;
-      mediaRef.current.load();
-    }
+    requestAnimationFrame(() => {
+      if (mediaRef.current && urlRef.current) {
+        mediaRef.current.src = urlRef.current;
+        mediaRef.current.load();
+      }
+    });
     event.target.value = "";
   };
 
   const resetSource = () => {
+    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    void contextRef.current?.close();
+    contextRef.current = null;
+    analyserRef.current = null;
+    sourceRef.current = null;
+    energyHistoryRef.current = [];
+    beatsRef.current = [];
+
     if (mediaRef.current) {
       mediaRef.current.pause();
       mediaRef.current.removeAttribute("src");
@@ -133,7 +163,6 @@ export default function Spectrogram({ clock, playing }: Props) {
     urlRef.current = null;
     setSourceName("");
     setSourceType(null);
-    setMarks([]);
     setError(null);
   };
 
@@ -158,9 +187,6 @@ export default function Spectrogram({ clock, playing }: Props) {
       {sourceType === "audio" && <audio ref={mediaRef as React.RefObject<HTMLAudioElement>} className="spectrogram-audio" controls onPlay={() => void setupAnalyser()} />}
       {!sourceName && <p className="spectrogram-empty">Importe une musique ou une vidéo pour analyser ses attaques sonores.</p>}
       {enabled && sourceName && <canvas ref={canvasRef} className="spectrogram-canvas" aria-label="Visualisation du spectre audio" />}
-      {enabled && sourceName && <div className="rhythm-track" aria-label="Attaques détectées">
-        {marks.map((mark, index) => <span key={`${mark.time}-${index}`} style={{ left: `${Math.min(100, (mark.time / Math.max(1, clock.rawElapsedMs() / 1000)) * 100)}%`, opacity: Math.min(1, mark.strength / 180) }} />)}
-      </div>}
       {error && <p className="recorder-error" role="alert">{error}</p>}
     </section>
   );

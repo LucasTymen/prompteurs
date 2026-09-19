@@ -112,6 +112,7 @@ body.light {
 @keyframes splash-progress { from { transform: scaleX(1); } to { transform: scaleX(0); } }
 
 .prompter-stage {
+  position: relative;
   min-height: 0;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
@@ -422,20 +423,13 @@ textarea {
   border-radius: 7px;
   background: #061022;
 }
-.rhythm-track {
-  position: relative;
-  height: 12px;
-  margin-top: 5px;
-  overflow: hidden;
-  border-radius: 4px;
-  background: var(--surface-raised);
-}
-.rhythm-track span {
+/* Filigrane de rythme au-dessus de la zone du prompteur */
+.rhythm-overlay {
   position: absolute;
-  top: 0;
-  width: 2px;
-  height: 100%;
-  background: var(--accent-strong);
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  border-radius: 14px;
 }
 
 /* RACCOURCIS */
