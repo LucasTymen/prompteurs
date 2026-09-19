@@ -10,6 +10,8 @@ import Recorder from "@/components/Recorder";
 import SplashScreen from "@/components/SplashScreen";
 import Spectrogram from "@/components/Spectrogram";
 import RhythmOverlay, { type BeatMark } from "@/components/RhythmOverlay";
+import Header from "@/components/Header";
+import Transport from "@/components/Transport";
 import { MusicClock, SIGNATURES, pxPerSecond, type Signature } from "@/lib/music";
 
 // Clé de persistance des réglages.
@@ -122,6 +124,10 @@ export default function Page() {
 
   // Attaques sonores détectées par le spectrogramme, partagées avec le filigrane.
   const beatsRef = useRef<BeatMark[]>([]);
+
+  // Onglet actif dans la zone des panneaux.
+  type Tab = "texte" | "reglages" | "musique" | "studio" | "spectro";
+  const [tab, setTab] = useState<Tab>("texte");
 
   // Compte à rebours avant play (3 → 2 → 1). null = inactif.
   const [countdown, setCountdown] = useState<number | null>(null);
@@ -345,104 +351,139 @@ export default function Page() {
     <>
       <SplashScreen />
       <div className="app">
-      <main className="prompter-stage">
-        <Metronome clock={clock} beatsPerMeasure={signature.beats} enabled={musicEnabled} />
-        <Prompteur
-          text={text}
-          mode={mode}
-          playing={playing}
-          fontSize={fontSize}
-          fontFamily={fontFamily}
-          zoom={zoom}
-          mirrored={mirrored}
-          clock={clock}
-          speedPxPerSec={speedPxPerSec}
-          pxPerBeat={pxPerBeat}
-          onThBeats={onThBeats}
-          nearThBeats={nearThBeats}
-          resetSignal={resetSignal}
-          nudgeSignal={nudgeSignal}
-          nudgeDir={nudgeDirRef.current}
-        />
-        <RhythmOverlay beatsRef={beatsRef} clock={clock} speedPxPerSec={speedPxPerSec} />
-      </main>
+        <Header onTheme={toggleTheme} onFullscreen={toggleFullscreen} />
 
-      <div className="editor-row">
-        <textarea
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onBlur={applyDraft}
-          placeholder="Saisis ton texte..."
-        />
-        <div className="editor-actions">
-          <button type="button" onClick={() => fileInputRef.current?.click()}>
-            Importer .txt
-          </button>
-          <button type="button" onClick={exportText}>
-            Exporter .txt
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".txt,text/plain"
-            onChange={importText}
-            style={{ display: "none" }}
+        <main className="prompter-stage">
+          <Metronome clock={clock} beatsPerMeasure={signature.beats} enabled={musicEnabled} />
+          <Prompteur
+            text={text}
+            mode={mode}
+            playing={playing}
+            fontSize={fontSize}
+            fontFamily={fontFamily}
+            zoom={zoom}
+            mirrored={mirrored}
+            clock={clock}
+            speedPxPerSec={speedPxPerSec}
+            pxPerBeat={pxPerBeat}
+            onThBeats={onThBeats}
+            nearThBeats={nearThBeats}
+            resetSignal={resetSignal}
+            nudgeSignal={nudgeSignal}
+            nudgeDir={nudgeDirRef.current}
           />
-        </div>
-      </div>
+          <RhythmOverlay beatsRef={beatsRef} clock={clock} speedPxPerSec={speedPxPerSec} />
+        </main>
 
-      <Recorder
-        startSignal={recordingStartSignal}
-        onRequestStart={handleRecordingStart}
-      />
+        <Transport
+          playing={playing}
+          counting={countdown !== null}
+          onPlay={handlePlay}
+          onReset={doReset}
+          mode={mode}
+          onMode={toggleMode}
+          onMirror={() => setMirrored((m) => !m)}
+        />
 
-      <Spectrogram clock={clock} playing={playing} beatsRef={beatsRef} />
+        <nav className="tabs" role="tablist">
+          {([
+            ["texte", "Texte"],
+            ["reglages", "Réglages"],
+            ["musique", "Musique"],
+            ["studio", "Studio"],
+            ["spectro", "Spectrogramme"],
+          ] as const).map(([id, label]) => (
+            <button
+              key={id}
+              role="tab"
+              aria-selected={tab === id}
+              className={`tab ${tab === id ? "tab-active" : ""}`}
+              onClick={() => setTab(id)}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
 
-      <Controls
-        fontFamily={fontFamily}
-        onFontFamily={setFontFamily}
-        fontSize={fontSize}
-        onFontSize={setFontSize}
-        zoom={zoom}
-        onZoom={setZoom}
-        manualSpeed={manualSpeed}
-        onManualSpeed={setManualSpeed}
-        musicEnabled={musicEnabled}
-        playing={playing}
-        counting={countdown !== null}
-        onPlay={handlePlay}
-        onReset={doReset}
-        onMirror={() => setMirrored((m) => !m)}
-        mode={mode}
-        onMode={toggleMode}
-        onFullscreen={toggleFullscreen}
-        onTheme={toggleTheme}
-      />
+        <section className="panel" role="tabpanel">
+          {tab === "texte" && (
+            <div className="editor-row">
+              <textarea
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onBlur={applyDraft}
+                placeholder="Saisis ton texte..."
+              />
+              <div className="editor-actions">
+                <button type="button" onClick={() => fileInputRef.current?.click()}>
+                  Importer .txt
+                </button>
+                <button type="button" onClick={exportText}>
+                  Exporter .txt
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".txt,text/plain"
+                  onChange={importText}
+                  style={{ display: "none" }}
+                />
+              </div>
+            </div>
+          )}
 
-      <MusicSync
-        enabled={musicEnabled}
-        onToggleEnabled={() => setMusicEnabled((m) => !m)}
-        bpm={bpm}
-        onBpm={setBpm}
-        signature={signature}
-        onSignature={setSignature}
-        pxPerBeat={pxPerBeat}
-        onPxPerBeat={setPxPerBeat}
-        onThBeats={onThBeats}
-        onOnThBeats={setOnThBeats}
-        nearThBeats={nearThBeats}
-        onNearThBeats={setNearThBeats}
-        startOffsetBeats={startOffsetBeats}
-        onStartOffsetBeats={setStartOffsetBeats}
-        onTapTempo={tapTempo}
-      />
+          {tab === "reglages" && (
+            <Controls
+              fontFamily={fontFamily}
+              onFontFamily={setFontFamily}
+              fontSize={fontSize}
+              onFontSize={setFontSize}
+              zoom={zoom}
+              onZoom={setZoom}
+              manualSpeed={manualSpeed}
+              onManualSpeed={setManualSpeed}
+              musicEnabled={musicEnabled}
+            />
+          )}
 
-      <p className="shortcuts">
-        Espace = Play/Pause · Flèches = Naviguer · H = Horizontal/Vertical · M = Miroir ·
-        F = Plein écran · T = Thème · R = Reset · S = Synchro musique · B = Tap tempo
-      </p>
+          {tab === "musique" && (
+            <MusicSync
+              enabled={musicEnabled}
+              onToggleEnabled={() => setMusicEnabled((m) => !m)}
+              bpm={bpm}
+              onBpm={setBpm}
+              signature={signature}
+              onSignature={setSignature}
+              pxPerBeat={pxPerBeat}
+              onPxPerBeat={setPxPerBeat}
+              onThBeats={onThBeats}
+              onOnThBeats={setOnThBeats}
+              nearThBeats={nearThBeats}
+              onNearThBeats={setNearThBeats}
+              startOffsetBeats={startOffsetBeats}
+              onStartOffsetBeats={setStartOffsetBeats}
+              onTapTempo={tapTempo}
+            />
+          )}
 
-      {countdown !== null && <Countdown value={countdown} />}
+          {tab === "studio" && (
+            <Recorder
+              startSignal={recordingStartSignal}
+              onRequestStart={handleRecordingStart}
+            />
+          )}
+
+          {tab === "spectro" && (
+            <Spectrogram clock={clock} playing={playing} beatsRef={beatsRef} />
+          )}
+        </section>
+
+        <p className="shortcuts">
+          Espace = Play/Pause · Flèches = Naviguer · H = Horizontal/Vertical · M = Miroir ·
+          F = Plein écran · T = Thème · R = Reset · S = Synchro musique · B = Tap tempo
+        </p>
+
+        {countdown !== null && <Countdown value={countdown} />}
       </div>
     </>
   );
