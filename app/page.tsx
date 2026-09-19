@@ -7,6 +7,7 @@ import Metronome from "@/components/Metronome";
 import MusicSync from "@/components/MusicSync";
 import Countdown from "@/components/Countdown";
 import Recorder from "@/components/Recorder";
+import SplashScreen from "@/components/SplashScreen";
 import { MusicClock, SIGNATURES, pxPerSecond, type Signature } from "@/lib/music";
 
 // Clé de persistance des réglages.
@@ -336,7 +337,9 @@ export default function Page() {
   }, [toggleFullscreen, toggleMode, toggleTheme, doReset, tapTempo, nudge, handlePlay]);
 
   return (
-    <div className="app">
+    <>
+      <SplashScreen />
+      <div className="app">
       <main className="prompter-stage">
         <Metronome clock={clock} beatsPerMeasure={signature.beats} enabled={musicEnabled} />
         <Prompteur
@@ -432,6 +435,7 @@ export default function Page() {
       </p>
 
       {countdown !== null && <Countdown value={countdown} />}
-    </div>
+      </div>
+    </>
   );
 }

@@ -15,6 +15,8 @@
 
 body {
   margin: 0;
+  min-width: 320px;
+  overflow-x: hidden;
   font-family: "Avenir Next", "Segoe UI", sans-serif;
   background: var(--bg);
   color: var(--text);
@@ -42,7 +44,72 @@ body.light {
   grid-template-rows: auto minmax(0, 1fr) auto auto auto;
   gap: 10px;
   overflow: auto;
+  overscroll-behavior: contain;
 }
+
+/* SPLASH */
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #050a22;
+  animation: splash-in 0.45s ease-out both;
+}
+.splash-art,
+.splash-art img,
+.splash-shade {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.splash-art img {
+  object-fit: cover;
+  object-position: center;
+}
+.splash-shade {
+  background: linear-gradient(180deg, rgba(3, 8, 33, 0.08) 20%, rgba(3, 8, 33, 0.76) 100%);
+}
+.splash-content {
+  position: relative;
+  z-index: 1;
+  width: min(90%, 560px);
+  margin-top: min(50vh, 360px);
+  text-align: center;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.7);
+}
+.splash-kicker {
+  margin: 0;
+  color: #d9e8ff;
+  font: 700 clamp(22px, 4vw, 42px)/1.1 Georgia, serif;
+}
+.splash-caption {
+  margin: 10px 0 18px;
+  color: rgba(235, 243, 255, 0.86);
+  font-size: clamp(13px, 2vw, 17px);
+}
+.splash-close {
+  min-width: 100px;
+  border-color: rgba(255, 255, 255, 0.48);
+  background: rgba(7, 19, 65, 0.72);
+  color: #fff;
+  backdrop-filter: blur(8px);
+}
+.splash-progress {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  transform-origin: left;
+  background: var(--accent);
+  animation: splash-progress 4.5s linear both;
+}
+@keyframes splash-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes splash-progress { from { transform: scaleX(1); } to { transform: scaleX(0); } }
 
 .prompter-stage {
   min-height: 0;
@@ -417,13 +484,39 @@ input[type="range"] { accent-color: var(--accent); }
 .music-sync button { width: 100%; }
 
 @media (max-width: 760px) {
-  .app { padding: 10px; gap: 8px; }
+  .app {
+    min-height: 100dvh;
+    height: auto;
+    padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+    gap: 8px;
+  }
+  .prompter-stage { min-height: 42dvh; }
+  .text-container { min-height: 42dvh; border-radius: 10px; }
   .editor-row { grid-template-columns: 1fr; }
+  textarea { height: 110px; min-height: 90px; }
   .editor-actions { flex-direction: row; }
   .editor-actions button { flex: 1; }
   .music-sync { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .recorder-grid { grid-template-columns: 112px minmax(0, 1fr); }
+  .controls { gap: 4px; }
+  .controls label { min-width: calc(50% - 4px); flex-basis: calc(50% - 4px); }
+  .recorder-grid { grid-template-columns: 96px minmax(0, 1fr); }
   .recorder-half { right: 8px; bottom: 8px; width: calc(100vw - 16px); }
+}
+
+@media (max-width: 480px) {
+  .music-sync { grid-template-columns: 1fr; }
+  .recorder-grid { grid-template-columns: 1fr; }
+  .recorder-preview-wrap { min-height: 74px; }
+  .recorder-preview { min-height: 74px; }
+  .splash-content { margin-top: 58dvh; }
+}
+
+@media (min-width: 761px) and (max-width: 1100px) {
+  .music-sync { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
 
 @media (max-height: 700px) and (min-width: 761px) {
