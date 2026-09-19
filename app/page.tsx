@@ -8,6 +8,7 @@ import MusicSync from "@/components/MusicSync";
 import Countdown from "@/components/Countdown";
 import Recorder from "@/components/Recorder";
 import SplashScreen from "@/components/SplashScreen";
+import Spectrogram from "@/components/Spectrogram";
 import { MusicClock, SIGNATURES, pxPerSecond, type Signature } from "@/lib/music";
 
 // Clé de persistance des réglages.
@@ -284,7 +285,7 @@ export default function Page() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "prompteur.txt";
+    a.download = "squidspeakerine.txt";
     a.click();
     URL.revokeObjectURL(url);
   }, [draft]);
@@ -389,6 +390,8 @@ export default function Page() {
         startSignal={recordingStartSignal}
         onRequestStart={handleRecordingStart}
       />
+
+      <Spectrogram clock={clock} playing={playing} />
 
       <Controls
         fontFamily={fontFamily}

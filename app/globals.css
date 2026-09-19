@@ -370,6 +370,74 @@ textarea {
 }
 .recorder-full .recorder-preview { min-height: min(58dvh, 560px); }
 
+/* SPECTROGRAM */
+.spectrogram {
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.spectrogram-heading,
+.spectrogram-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.spectrogram-heading { justify-content: space-between; margin-bottom: 6px; }
+.spectrogram h2 { margin: 0; font-size: 13px; }
+.spectrogram-toolbar { flex-wrap: wrap; }
+.file-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 29px;
+  padding: 5px 9px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 650;
+}
+.file-button input { display: none; }
+.spectrogram-file {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.spectrogram-video,
+.spectrogram-audio { display: block; width: 100%; margin-top: 7px; }
+.spectrogram-video { max-height: 170px; border-radius: 8px; background: #081018; }
+.spectrogram-audio { height: 32px; }
+.spectrogram-empty,
+.spectrogram .recorder-error { margin: 7px 0 0; color: var(--muted); font-size: 12px; }
+.spectrogram-canvas {
+  display: block;
+  width: 100%;
+  height: 112px;
+  margin-top: 8px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: #061022;
+}
+.rhythm-track {
+  position: relative;
+  height: 12px;
+  margin-top: 5px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--surface-raised);
+}
+.rhythm-track span {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background: var(--accent-strong);
+}
+
 /* RACCOURCIS */
 .shortcuts {
   font-size: 12px;
@@ -508,6 +576,7 @@ input[type="range"] { accent-color: var(--accent); }
   .recorder-grid { grid-template-columns: 1fr; }
   .recorder-preview-wrap { min-height: 74px; }
   .recorder-preview { min-height: 74px; }
+  .spectrogram-canvas { height: 88px; }
   .splash-content { margin-top: 58dvh; }
 }
 

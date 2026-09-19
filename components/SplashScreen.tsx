@@ -15,7 +15,7 @@ export default function SplashScreen() {
   if (!visible) return null;
 
   return (
-    <div className="splash" role="dialog" aria-modal="true" aria-label="Présentation de Prompteur Pro">
+    <div className="splash" role="dialog" aria-modal="true" aria-label="Présentation de SquidSpeakerine">
       <picture className="splash-art">
         <source media="(max-width: 640px)" srcSet="/images/squidspeakerine-mobile.png" />
         <source media="(max-width: 1024px)" srcSet="/images/squidspeakerine-medium.png" />
@@ -23,7 +23,7 @@ export default function SplashScreen() {
       </picture>
       <div className="splash-shade" />
       <div className="splash-content">
-        <p className="splash-kicker">Prompteur Pro</p>
+        <p className="splash-kicker">SquidSpeakerine</p>
         <p className="splash-caption">Prépare ta prise, puis laisse le texte défiler.</p>
         <button type="button" className="splash-close" onClick={() => setVisible(false)}>
           Fermer

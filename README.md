@@ -1,6 +1,6 @@
-# Prompteur Pro
+# SquidSpeakerine
 
-Prompteur web pour vidéos et présentations, avec défilement synchronisé sur la musique. Application Next.js (React + TypeScript) qui découpe le texte en syllabes, les fait défiler horizontalement ou verticalement, et les surligne au rythme du morceau.
+SquidSpeakerine est un prompteur web pour vidéos et présentations, avec défilement synchronisé sur la musique. Application Next.js (React + TypeScript) qui découpe le texte en syllabes, les fait défiler horizontalement ou verticalement, et les surligne au rythme du morceau.
 
 ## Fonctionnalités
 

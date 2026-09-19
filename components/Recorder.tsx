@@ -170,7 +170,7 @@ export default function Recorder({ startSignal, onRequestStart, onRecordingChang
     if (!resultUrl) return;
     const link = document.createElement("a");
     link.href = resultUrl;
-    link.download = mode === "video" ? "prompteur-video.webm" : "prompteur-audio.webm";
+    link.download = mode === "video" ? "squidspeakerine-video.webm" : "squidspeakerine-audio.webm";
     link.click();
   };
 

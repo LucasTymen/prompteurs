@@ -1,4 +1,4 @@
-# Notice technique — Prompteur Pro
+# Notice technique — SquidSpeakerine
 
 Mode d'emploi et documentation technique du prompteur web synchronisé à la musique.
 
@@ -6,7 +6,7 @@ Mode d'emploi et documentation technique du prompteur web synchronisé à la mus
 
 ## 1. Présentation
 
-Prompteur Pro est une application web (Next.js + React + TypeScript) qui fait défiler du texte découpé en syllabes, horizontalement ou verticalement, et les surligne au rythme d'un morceau. Elle est pensée pour les vidéos, présentations et le doublage : le texte démarre près de la ligne de repère, un compte à rebours 3-2-1 précède la mise en lecture, et l'utilisateur peut réajuster manuellement le texte à la souris ou au doigt, même pendant le défilement.
+SquidSpeakerine est une application web (Next.js + React + TypeScript) qui fait défiler du texte découpé en syllabes, horizontalement ou verticalement, et les surligne au rythme d'un morceau. Elle est pensée pour les vidéos, présentations et le doublage : le texte démarre près de la ligne de repère, un compte à rebours 3-2-1 précède la mise en lecture, et l'utilisateur peut réajuster manuellement le texte à la souris ou au doigt, même pendant le défilement.
 
 - Aucune dépendance externe : Next.js, React, TypeScript uniquement.
 - 100 % côté client : pas de serveur ni de base de données.
