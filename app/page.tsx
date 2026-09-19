@@ -6,6 +6,7 @@ import Controls from "@/components/Controls";
 import Metronome from "@/components/Metronome";
 import MusicSync from "@/components/MusicSync";
 import Countdown from "@/components/Countdown";
+import Recorder from "@/components/Recorder";
 import { MusicClock, SIGNATURES, pxPerSecond, type Signature } from "@/lib/music";
 
 // Clé de persistance des réglages.
@@ -27,6 +28,8 @@ type Settings = {
   nearThBeats: number;
   startOffsetBeats: number;
 };
+
+type CountdownAction = "prompteur" | "enregistrement";
 
 const DEFAULTS: Settings = {
   mode: "vertical",
@@ -116,6 +119,8 @@ export default function Page() {
 
   // Compte à rebours avant play (3 → 2 → 1). null = inactif.
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [countdownAction, setCountdownAction] = useState<CountdownAction>("prompteur");
+  const [recordingStartSignal, setRecordingStartSignal] = useState(0);
 
   // Horloge partagée (créée une fois, paramètres mis à jour via effets).
   const clockRef = useRef<MusicClock | null>(null);
@@ -138,19 +143,22 @@ export default function Page() {
     }
   }, [playing, clock]);
 
-  // Compte à rebours : décrémente chaque seconde ; à 1, lance le play.
+  // Compte à rebours : décrémente chaque seconde ; à 1, lance le prompteur et/ou l'enregistrement.
   useEffect(() => {
     if (countdown === null) return;
     const t = setTimeout(() => {
       if (countdown <= 1) {
         setCountdown(null);
         setPlaying(true);
+        if (countdownAction === "enregistrement") {
+          setRecordingStartSignal((signal) => signal + 1);
+        }
       } else {
         setCountdown((c) => (c ?? 0) - 1);
       }
     }, 1000);
     return () => clearTimeout(t);
-  }, [countdown]);
+  }, [countdown, countdownAction]);
 
   // Lance le play via le compte à rebours, ou annule si déjà en cours/compte.
   const handlePlay = useCallback(() => {
@@ -163,8 +171,18 @@ export default function Page() {
       setCountdown(null);
       return;
     }
+    setCountdownAction("prompteur");
     setCountdown(3);
   }, [playing, countdown]);
+
+  const handleRecordingStart = useCallback(() => {
+    if (countdown !== null) {
+      setCountdown(null);
+      return;
+    }
+    setCountdownAction("enregistrement");
+    setCountdown(3);
+  }, [countdown]);
 
   // Persistance : sauvegarder les réglages à chaque changement.
   useEffect(() => {
@@ -319,25 +337,26 @@ export default function Page() {
 
   return (
     <div className="app">
-      <Metronome clock={clock} beatsPerMeasure={signature.beats} enabled={musicEnabled} />
-
-      <Prompteur
-        text={text}
-        mode={mode}
-        playing={playing}
-        fontSize={fontSize}
-        fontFamily={fontFamily}
-        zoom={zoom}
-        mirrored={mirrored}
-        clock={clock}
-        speedPxPerSec={speedPxPerSec}
-        pxPerBeat={pxPerBeat}
-        onThBeats={onThBeats}
-        nearThBeats={nearThBeats}
-        resetSignal={resetSignal}
-        nudgeSignal={nudgeSignal}
-        nudgeDir={nudgeDirRef.current}
-      />
+      <main className="prompter-stage">
+        <Metronome clock={clock} beatsPerMeasure={signature.beats} enabled={musicEnabled} />
+        <Prompteur
+          text={text}
+          mode={mode}
+          playing={playing}
+          fontSize={fontSize}
+          fontFamily={fontFamily}
+          zoom={zoom}
+          mirrored={mirrored}
+          clock={clock}
+          speedPxPerSec={speedPxPerSec}
+          pxPerBeat={pxPerBeat}
+          onThBeats={onThBeats}
+          nearThBeats={nearThBeats}
+          resetSignal={resetSignal}
+          nudgeSignal={nudgeSignal}
+          nudgeDir={nudgeDirRef.current}
+        />
+      </main>
 
       <div className="editor-row">
         <textarea
@@ -362,6 +381,11 @@ export default function Page() {
           />
         </div>
       </div>
+
+      <Recorder
+        startSignal={recordingStartSignal}
+        onRequestStart={handleRecordingStart}
+      />
 
       <Controls
         fontFamily={fontFamily}

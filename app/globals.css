@@ -44,6 +44,13 @@ body.light {
   overflow: auto;
 }
 
+.prompter-stage {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 6px;
+}
+
 /* ZONE D'AFFICHAGE */
 .text-container {
   min-height: 0;
@@ -140,6 +147,162 @@ textarea {
   gap: 8px;
 }
 
+/* RECORDER */
+.recorder {
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.recorder-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.eyebrow {
+  margin: 0 0 2px;
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.recorder h2 {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 0;
+}
+.recorder-status {
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: var(--surface-raised);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+.recorder-status-recording { color: var(--accent-strong); }
+.recorder-status-paused { color: #f2c14e; }
+.recorder-grid {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.8fr) minmax(0, 1.6fr);
+  gap: 8px;
+  align-items: stretch;
+}
+.recorder-preview-wrap {
+  position: relative;
+  min-height: 58px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg);
+}
+.recorder-preview,
+.recorder-result {
+  display: block;
+  width: 100%;
+  max-height: 180px;
+  object-fit: cover;
+  background: #081018;
+}
+.recorder-preview { height: 100%; min-height: 58px; }
+.recorder-audio-preview {
+  display: grid;
+  min-height: 58px;
+  place-items: center;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+}
+.recorder-time {
+  position: absolute;
+  right: 8px;
+  bottom: 7px;
+  padding: 4px 6px;
+  border-radius: 5px;
+  background: rgba(8, 16, 24, 0.78);
+  color: #fff;
+  font: 700 12px/1 "Segoe UI", sans-serif;
+}
+.recorder-settings {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+  align-content: center;
+}
+.recorder-settings label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.recorder-settings label select { width: 100%; }
+.recorder-settings select { min-height: 29px; }
+.recorder-modes,
+.recorder-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.recorder-modes { grid-column: 1 / -1; }
+.recorder-modes button { flex: 1; }
+.recorder-modes .is-selected {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.recorder-actions { grid-column: 1 / -1; }
+.recorder-actions button { flex: 1; }
+.recorder-expand {
+  min-height: 28px;
+  padding: 3px 8px;
+  margin-left: auto;
+  font-size: 16px;
+  line-height: 1;
+}
+.button-primary { border-color: var(--accent); background: rgba(94, 214, 192, 0.14); }
+.button-danger { border-color: var(--accent-strong); }
+.recorder-message,
+.recorder-error {
+  margin: 8px 0 0;
+  font-size: 12px;
+}
+.recorder-message { color: var(--muted); }
+.recorder-error { color: var(--accent-strong); }
+.recorder-result {
+  margin-top: 10px;
+  max-height: 220px;
+  border-radius: 8px;
+}
+.recorder-half,
+.recorder-full {
+  z-index: 30;
+  box-shadow: var(--shadow);
+}
+.recorder-half {
+  position: fixed;
+  right: 14px;
+  bottom: 14px;
+  width: min(560px, calc(100vw - 28px));
+  max-height: 50dvh;
+  overflow: auto;
+}
+.recorder-full {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  overflow: auto;
+  border-radius: 0;
+  padding: clamp(12px, 3vw, 36px);
+}
+.recorder-full .recorder-preview-wrap {
+  min-height: min(58dvh, 560px);
+}
+.recorder-full .recorder-preview { min-height: min(58dvh, 560px); }
+
 /* RACCOURCIS */
 .shortcuts {
   font-size: 12px;
@@ -152,8 +315,8 @@ textarea {
 .controls {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 10px;
+  gap: 5px;
+  padding: 6px;
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--surface);
@@ -164,15 +327,15 @@ textarea {
   display: flex;
   flex-direction: column;
   font-size: 12px;
-  gap: 5px;
-  min-width: 120px;
-  flex: 1 1 130px;
+  gap: 3px;
+  min-width: 100px;
+  flex: 1 1 112px;
   color: var(--muted);
 }
 
 button {
-  min-height: 36px;
-  padding: 7px 12px;
+  min-height: 30px;
+  padding: 5px 9px;
   cursor: pointer;
   background: var(--surface-raised);
   color: var(--text);
@@ -190,7 +353,7 @@ button:disabled, select:disabled, input:disabled { cursor: not-allowed; opacity:
 
 select, input[type="range"] { width: 100%; }
 select {
-  min-height: 34px;
+  min-height: 29px;
   padding: 5px 8px;
   border: 1px solid var(--border);
   border-radius: 7px;
@@ -236,8 +399,8 @@ input[type="range"] { accent-color: var(--accent); }
 .music-sync {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-  padding: 10px;
+  gap: 5px;
+  padding: 6px;
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--surface);
@@ -247,7 +410,7 @@ input[type="range"] { accent-color: var(--accent); }
   display: flex;
   flex-direction: column;
   font-size: 12px;
-  gap: 5px;
+  gap: 3px;
   color: var(--muted);
 }
 
@@ -259,32 +422,8 @@ input[type="range"] { accent-color: var(--accent); }
   .editor-actions { flex-direction: row; }
   .editor-actions button { flex: 1; }
   .music-sync { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-
-/* COMPTE À REBOURS */
-.countdown-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.55);
-  pointer-events: none;
-}
-.countdown-number {
-  font-size: clamp(120px, 28vw, 320px);
-  font-weight: 800;
-  color: var(--accent);
-  line-height: 1;
-  text-shadow: 0 0 40px rgba(94, 214, 192, 0.5);
-  animation: countdown-zoom 1s ease-out forwards;
-}
-@keyframes countdown-zoom {
-  0% { transform: scale(0.2); opacity: 0; }
-  25% { transform: scale(1.15); opacity: 1; }
-  70% { transform: scale(1); opacity: 1; }
-  100% { transform: scale(1.9); opacity: 0; }
+  .recorder-grid { grid-template-columns: 112px minmax(0, 1fr); }
+  .recorder-half { right: 8px; bottom: 8px; width: calc(100vw - 16px); }
 }
 
 @media (max-height: 700px) and (min-width: 761px) {
