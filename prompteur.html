@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prompteur Pro</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    transition: 0.3s;
+}
+
+/* THEMES */
+body.dark {
+    background: #111;
+    color: white;
+}
+body.light {
+    background: #f5f5f5;
+    color: #111;
+}
+
+.container {
+    width: 90%;
+    max-width: 1000px;
+    margin: auto;
+}
+
+/* DISPLAY */
+.text-container {
+    height: 60vh;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid #444;
+}
+
+/* TEXTE */
+.text-content {
+    position: absolute;
+    width: 100%;
+    white-space: pre-wrap;
+    text-align: center;
+    line-height: 1.8;
+    font-size: 32px;
+}
+
+/* LIGNE ROUGE */
+.marker {
+    position: absolute;
+    top: 50%;
+    width: 100%;
+    height: 2px;
+    background: red;
+    z-index: 10;
+}
+
+/* EDITOR */
+textarea {
+    width: 100%;
+    height: 120px;
+    margin-top: 10px;
+}
+
+/* CONTROLS */
+.controls {
+    margin-top: 10px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+}
+
+button {
+    padding: 6px;
+    cursor: pointer;
+}
+</style>
+</head>
+
+<body class="dark">
+
+<div class="container">
+
+    <div class="text-container">
+        <div class="marker"></div>
+        <div id="text" class="text-content"></div>
+    </div>
+
+    <textarea id="editor"></textarea>
+
+    <div class="controls">
+
+        <select id="fontFamily">
+            <option>Arial</option>
+            <option>Verdana</option>
+            <option>Georgia</option>
+            <option>Courier New</option>
+        </select>
+
+        <input type="range" id="fontSize" min="20" max="80" value="32">
+        <input type="range" id="zoom" min="0.5" max="2" step="0.1" value="1">
+        <input type="range" id="speed" min="0.2" max="5" step="0.1" value="1">
+
+        <button id="play">Play</button>
+        <button id="reset">Reset</button>
+        <button id="mirror">Miroir</button>
+        <button id="fullscreen">Fullscreen</button>
+        <button id="theme">Thème</button>
+
+    </div>
+
+</div>
+
+<script>
+const text = document.getElementById("text");
+const editor = document.getElementById("editor");
+
+const fontFamily = document.getElementById("fontFamily");
+const fontSize = document.getElementById("fontSize");
+const zoomControl = document.getElementById("zoom");
+const speedControl = document.getElementById("speed");
+
+const playBtn = document.getElementById("play");
+const resetBtn = document.getElementById("reset");
+const mirrorBtn = document.getElementById("mirror");
+const fullscreenBtn = document.getElementById("fullscreen");
+const themeBtn = document.getElementById("theme");
+
+let isPlaying = false;
+let position = 0;
+let speed = 1;
+let zoom = 1;
+let isMirrored = false;
+
+/* LOAD */
+editor.value = localStorage.getItem("prompt") || "Ajoute ton texte...";
+text.textContent = editor.value;
+
+/* SYNC */
+editor.addEventListener("input", () => {
+    text.textContent = editor.value;
+    localStorage.setItem("prompt", editor.value);
+});
+
+/* APPLY TRANSFORM */
+function applyTransform() {
+    text.style.transform = `
+        translateY(${position}px)
+        scale(${zoom})
+        ${isMirrored ? 'scaleX(-1)' : ''}
+    `;
+}
+
+/* LOOP */
+function loop() {
+    if (!isPlaying) return;
+
+    position -= speed;
+    applyTransform();
+
+    requestAnimationFrame(loop);
+}
+
+/* PLAY */
+playBtn.onclick = () => {
+    isPlaying = !isPlaying;
+    playBtn.textContent = isPlaying ? "Pause" : "Play";
+    if (isPlaying) loop();
+};
+
+/* RESET */
+resetBtn.onclick = () => {
+    isPlaying = false;
+    position = 0;
+    applyTransform();
+    playBtn.textContent = "Play";
+};
+
+/* CONTROLS */
+fontSize.oninput = () => {
+    text.style.fontSize = fontSize.value + "px";
+};
+
+fontFamily.onchange = () => {
+    text.style.fontFamily = fontFamily.value;
+};
+
+zoomControl.oninput = () => {
+    zoom = parseFloat(zoomControl.value);
+    applyTransform();
+};
+
+speedControl.oninput = () => {
+    speed = parseFloat(speedControl.value);
+};
+
+mirrorBtn.onclick = () => {
+    isMirrored = !isMirrored;
+    applyTransform();
+};
+
+/* FULLSCREEN */
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+    } else {
+        document.exitFullscreen();
+    }
+}
+fullscreenBtn.onclick = toggleFullscreen;
+
+/* THEME */
+themeBtn.onclick = () => {
+    document.body.classList.toggle("dark");
+    document.body.classList.toggle("light");
+};
+
+/* KEYBOARD */
+document.addEventListener("keydown", (e) => {
+    if (e.target.tagName === "TEXTAREA") return;
+
+    switch (e.code) {
+        case "Space":
+            e.preventDefault();
+            playBtn.click();
+            break;
+        case "KeyF":
+            toggleFullscreen();
+            break;
+        case "KeyM":
+            mirrorBtn.click();
+            break;
+        case "KeyT":
+            themeBtn.click();
+            break;
+    }
+});
+</script>
+
+</body>
+</html>

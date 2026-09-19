@@ -1,0 +1,195 @@
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* THEMES */
+body.dark {
+  background: #111;
+  color: #eee;
+}
+body.light {
+  background: #f5f5f5;
+  color: #111;
+}
+
+.app {
+  width: 90%;
+  max-width: 1000px;
+  margin: auto;
+  padding: 16px 0;
+}
+
+/* ZONE D'AFFICHAGE */
+.text-container {
+  height: 60vh;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid #444;
+}
+
+.text-content {
+  position: absolute;
+  width: 100%;
+  white-space: pre-wrap;
+  text-align: center;
+  line-height: 1.8;
+  will-change: transform;
+  transform-origin: center top;
+}
+
+body.horizontal .text-content {
+  white-space: nowrap;
+  text-align: left;
+  width: auto;
+  top: 50%;
+}
+
+/* SYLLABES */
+.syl { transition: color 0.08s, background 0.08s; }
+
+/* Sur le temps (marqueur) : surlignage fort */
+body.dark .syl-on {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.18);
+  font-weight: 700;
+  border-radius: 3px;
+}
+body.light .syl-on {
+  color: #000;
+  background: rgba(0, 0, 0, 0.14);
+  font-weight: 700;
+  border-radius: 3px;
+}
+
+/* Bientôt sur le temps : anticipation (couleur douce) */
+body.dark .syl-near {
+  color: #f5a623;
+}
+body.light .syl-near {
+  color: #c77700;
+}
+
+/* LIGNE ROUGE (marqueur = temps) */
+.marker {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: red;
+  z-index: 10;
+  pointer-events: none;
+}
+body.horizontal .marker {
+  top: 0;
+  left: 50%;
+  width: 2px;
+  height: 100%;
+}
+
+/* EDITOR */
+.editor-row {
+  margin-top: 10px;
+}
+textarea {
+  width: 100%;
+  height: 120px;
+  background: inherit;
+  color: inherit;
+  border: 1px solid #444;
+  font-size: 16px;
+  padding: 8px;
+  resize: vertical;
+}
+.editor-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+/* RACCOURCIS */
+.shortcuts {
+  font-size: 12px;
+  opacity: 0.6;
+  margin-top: 10px;
+}
+
+/* CONTROLS */
+.controls {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  align-items: center;
+}
+
+.controls label {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  gap: 4px;
+}
+
+button {
+  padding: 6px 10px;
+  cursor: pointer;
+  background: #333;
+  color: inherit;
+  border: 1px solid #555;
+  border-radius: 4px;
+}
+body.light button { background: #fff; border-color: #bbb; }
+button:hover { filter: brightness(1.15); }
+
+select, input[type="range"] { width: 100%; }
+
+/* METRONOME */
+.metronome {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid #444;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+.beats { display: flex; gap: 6px; }
+.beat-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  transition: background 0.05s, color 0.05s, transform 0.05s;
+}
+.beat-dot.active {
+  background: #ff3b3b;
+  color: #fff;
+  transform: scale(1.25);
+  border-color: #ff3b3b;
+}
+.beat-dot.downbeat {
+  border-color: #ff3b3b;
+}
+
+/* MUSIC SYNC */
+.music-sync {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+  align-items: center;
+}
+.music-sync label {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  gap: 4px;
+}
