@@ -44,6 +44,8 @@ const DEFAULTS: Settings = {
   startOffsetBeats: 0,
 };
 
+const DEFAULT_TEXT = "Ajoute ton texte ici...";
+
 function loadSettings(): Settings {
   if (typeof window === "undefined") return DEFAULTS;
   try {
@@ -56,37 +58,56 @@ function loadSettings(): Settings {
 }
 
 function loadText(): string {
-  if (typeof window === "undefined") return "";
-  return localStorage.getItem(TEXT_KEY) || "Ajoute ton texte ici...";
+  if (typeof window === "undefined") return DEFAULT_TEXT;
+  return localStorage.getItem(TEXT_KEY) || DEFAULT_TEXT;
 }
 
 export default function Page() {
-  const s = useMemo(loadSettings, []);
-  const initialText = useMemo(loadText, []);
-
   // Texte
-  const [text, setText] = useState(initialText);
-  const [draft, setDraft] = useState(initialText);
+  const [text, setText] = useState(DEFAULT_TEXT);
+  const [draft, setDraft] = useState(DEFAULT_TEXT);
 
   // Affichage
-  const [mode, setMode] = useState<Mode>(s.mode);
+  const [mode, setMode] = useState<Mode>(DEFAULTS.mode);
   const [playing, setPlaying] = useState(false);
-  const [fontSize, setFontSize] = useState(s.fontSize);
-  const [fontFamily, setFontFamily] = useState(s.fontFamily);
-  const [zoom, setZoom] = useState(s.zoom);
-  const [mirrored, setMirrored] = useState(s.mirrored);
-  const [manualSpeed, setManualSpeed] = useState(s.manualSpeed);
+  const [fontSize, setFontSize] = useState(DEFAULTS.fontSize);
+  const [fontFamily, setFontFamily] = useState(DEFAULTS.fontFamily);
+  const [zoom, setZoom] = useState(DEFAULTS.zoom);
+  const [mirrored, setMirrored] = useState(DEFAULTS.mirrored);
+  const [manualSpeed, setManualSpeed] = useState(DEFAULTS.manualSpeed);
 
   // Musique
-  const [musicEnabled, setMusicEnabled] = useState(s.musicEnabled);
-  const [bpm, setBpm] = useState(s.bpm);
+  const [musicEnabled, setMusicEnabled] = useState(DEFAULTS.musicEnabled);
+  const [bpm, setBpm] = useState(DEFAULTS.bpm);
   const [signature, setSignature] = useState<Signature>(
-    SIGNATURES.find((x) => x.label === s.signatureLabel) || SIGNATURES[0]
+    SIGNATURES.find((x) => x.label === DEFAULTS.signatureLabel) || SIGNATURES[0]
   );
-  const [pxPerBeat, setPxPerBeat] = useState(s.pxPerBeat);
-  const [onThBeats, setOnThBeats] = useState(s.onThBeats);
-  const [nearThBeats, setNearThBeats] = useState(s.nearThBeats);
-  const [startOffsetBeats, setStartOffsetBeats] = useState(s.startOffsetBeats);
+  const [pxPerBeat, setPxPerBeat] = useState(DEFAULTS.pxPerBeat);
+  const [onThBeats, setOnThBeats] = useState(DEFAULTS.onThBeats);
+  const [nearThBeats, setNearThBeats] = useState(DEFAULTS.nearThBeats);
+  const [startOffsetBeats, setStartOffsetBeats] = useState(DEFAULTS.startOffsetBeats);
+
+  // Charger les valeurs persistées après montage (évite le mismatch d'hydratation).
+  useEffect(() => {
+    const s = loadSettings();
+    const t = loadText();
+    setText(t);
+    setDraft(t);
+    setMode(s.mode);
+    setFontSize(s.fontSize);
+    setFontFamily(s.fontFamily);
+    setZoom(s.zoom);
+    setMirrored(s.mirrored);
+    setManualSpeed(s.manualSpeed);
+    setMusicEnabled(s.musicEnabled);
+    setBpm(s.bpm);
+    const sig = SIGNATURES.find((x) => x.label === s.signatureLabel);
+    if (sig) setSignature(sig);
+    setPxPerBeat(s.pxPerBeat);
+    setOnThBeats(s.onThBeats);
+    setNearThBeats(s.nearThBeats);
+    setStartOffsetBeats(s.startOffsetBeats);
+  }, []);
 
   // Reset / nudge
   const [resetSignal, setResetSignal] = useState(0);
