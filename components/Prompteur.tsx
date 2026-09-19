@@ -319,7 +319,11 @@ export default function Prompteur({
       onPointerMove={onPointerMove}
       onPointerUp={endDrag}
       onPointerCancel={endDrag}
-      style={{ cursor: "grab", touchAction: "none" }}
+      style={{
+        cursor: "grab",
+        touchAction: "none",
+        "--prompt-font-size": `${fontSize}px`,
+      } as React.CSSProperties}
     >
       <div className="marker" />
       <div
