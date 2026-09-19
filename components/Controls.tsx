@@ -13,6 +13,7 @@ type Props = {
   onManualSpeed: (v: number) => void;
   musicEnabled: boolean;
   playing: boolean;
+  counting?: boolean;
   onPlay: () => void;
   onReset: () => void;
   onMirror: () => void;
@@ -75,7 +76,7 @@ export default function Controls(p: Props) {
       </label>
 
       <button onClick={p.onPlay} type="button">
-        {p.playing ? "Pause" : "Play"}
+        {p.counting ? "Annuler" : p.playing ? "Pause" : "Play"}
       </button>
       <button onClick={p.onReset} type="button">
         Reset

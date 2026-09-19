@@ -5,6 +5,7 @@ import Prompteur, { type Mode } from "@/components/Prompteur";
 import Controls from "@/components/Controls";
 import Metronome from "@/components/Metronome";
 import MusicSync from "@/components/MusicSync";
+import Countdown from "@/components/Countdown";
 import { MusicClock, SIGNATURES, pxPerSecond, type Signature } from "@/lib/music";
 
 // Clé de persistance des réglages.
@@ -92,6 +93,9 @@ export default function Page() {
   const [nudgeSignal, setNudgeSignal] = useState(0);
   const nudgeDirRef = useRef(1);
 
+  // Compte à rebours avant play (3 → 2 → 1). null = inactif.
+  const [countdown, setCountdown] = useState<number | null>(null);
+
   // Horloge partagée (créée une fois, paramètres mis à jour via effets).
   const clockRef = useRef<MusicClock | null>(null);
   if (clockRef.current === null) {
@@ -112,6 +116,34 @@ export default function Page() {
       clock.stop();
     }
   }, [playing, clock]);
+
+  // Compte à rebours : décrémente chaque seconde ; à 1, lance le play.
+  useEffect(() => {
+    if (countdown === null) return;
+    const t = setTimeout(() => {
+      if (countdown <= 1) {
+        setCountdown(null);
+        setPlaying(true);
+      } else {
+        setCountdown((c) => (c ?? 0) - 1);
+      }
+    }, 1000);
+    return () => clearTimeout(t);
+  }, [countdown]);
+
+  // Lance le play via le compte à rebours, ou annule si déjà en cours/compte.
+  const handlePlay = useCallback(() => {
+    if (playing) {
+      setPlaying(false);
+      setCountdown(null);
+      return;
+    }
+    if (countdown !== null) {
+      setCountdown(null);
+      return;
+    }
+    setCountdown(3);
+  }, [playing, countdown]);
 
   // Persistance : sauvegarder les réglages à chaque changement.
   useEffect(() => {
@@ -153,6 +185,7 @@ export default function Page() {
   // Mode
   const toggleMode = useCallback(() => {
     setPlaying(false);
+    setCountdown(null);
     setMode((m) => (m === "vertical" ? "horizontal" : "vertical"));
   }, []);
 
@@ -162,6 +195,7 @@ export default function Page() {
 
   const doReset = useCallback(() => {
     setPlaying(false);
+    setCountdown(null);
     setResetSignal((n) => n + 1);
   }, []);
 
@@ -223,7 +257,7 @@ export default function Page() {
       switch (e.code) {
         case "Space":
           e.preventDefault();
-          setPlaying((p) => !p);
+          handlePlay();
           break;
         case "KeyF":
           toggleFullscreen();
@@ -260,7 +294,7 @@ export default function Page() {
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [toggleFullscreen, toggleMode, toggleTheme, doReset, tapTempo, nudge]);
+  }, [toggleFullscreen, toggleMode, toggleTheme, doReset, tapTempo, nudge, handlePlay]);
 
   return (
     <div className="app">
@@ -319,7 +353,8 @@ export default function Page() {
         onManualSpeed={setManualSpeed}
         musicEnabled={musicEnabled}
         playing={playing}
-        onPlay={() => setPlaying((p) => !p)}
+        counting={countdown !== null}
+        onPlay={handlePlay}
         onReset={doReset}
         onMirror={() => setMirrored((m) => !m)}
         mode={mode}
@@ -350,6 +385,8 @@ export default function Page() {
         Espace = Play/Pause · Flèches = Naviguer · H = Horizontal/Vertical · M = Miroir ·
         F = Plein écran · T = Thème · R = Reset · S = Synchro musique · B = Tap tempo
       </p>
+
+      {countdown !== null && <Countdown value={countdown} />}
     </div>
   );
 }

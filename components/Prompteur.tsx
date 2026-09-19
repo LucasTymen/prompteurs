@@ -54,6 +54,13 @@ export default function Prompteur({
   const nudgeAccumRef = useRef(0); // déplacement manuel cumulé (px)
   const rafRef = useRef<number | null>(null);
 
+  // Glisser-déposer manuel (souris ou doigt) : prend le pas sur l'auto-scroll,
+  // qui reprend depuis la position relâchée.
+  const draggingRef = useRef(false);
+  const dragPosRef = useRef(0);
+  const dragStartRef = useRef({ pointer: 0, pos: 0 });
+  const movedRef = useRef(false); // distingue clic et glisse
+
   // Miroirs des props pour la boucle rAF.
   const modeRef = useRef(mode);
   const playingRef = useRef(playing);
@@ -76,11 +83,12 @@ export default function Prompteur({
 
   const tokens = useMemo(() => tokenize(text), [text]);
 
-  // Position initiale selon le mode.
+  // Position initiale : au niveau du marqueur (centre), pour que le texte
+  // démarre près de la ligne, quelle que soit l'orientation.
   const initialPos = () => {
     const c = containerRef.current;
     if (!c) return 0;
-    return modeRef.current === "horizontal" ? c.offsetWidth : c.offsetHeight / 2;
+    return modeRef.current === "horizontal" ? c.offsetWidth / 2 : c.offsetHeight / 2;
   };
 
   // Position effective courante (px), calculée depuis la clock + nudge.
@@ -151,10 +159,10 @@ export default function Prompteur({
   // Boucle d'animation : position calculée depuis la clock (anti-dérive).
   useEffect(() => {
     const frame = () => {
-      const pos = currentPos();
+      const pos = draggingRef.current ? dragPosRef.current : currentPos();
 
-      // En mode horizontal, boucler quand le texte est sorti.
-      if (modeRef.current === "horizontal" && playingRef.current) {
+      // En mode horizontal, boucler quand le texte est sorti (pas pendant le glisser).
+      if (!draggingRef.current && modeRef.current === "horizontal" && playingRef.current) {
         const tw = textRef.current ? textRef.current.scrollWidth : 0;
         const cw = containerRef.current ? containerRef.current.offsetWidth : 0;
         if (pos < -tw) {
@@ -221,8 +229,10 @@ export default function Prompteur({
     applyTransform(currentPos());
   }, [nudgeSignal, nudgeDir]);
 
-  // Clic dans la zone → placer la syllabe cliquée au marqueur.
+  // Clic dans la zone → placer la syllabe cliquée au marqueur (uniquement
+  // si le pointer n'a pas bougé = vrai clic, pas une fin de glisse).
   const onContainerClick = (e: React.MouseEvent) => {
+    if (movedRef.current) return;
     if (playingRef.current) return;
     const container = containerRef.current;
     if (!container) return;
@@ -264,6 +274,39 @@ export default function Prompteur({
     applyTransform(currentPos());
   };
 
+  // Glisser-déposer manuel (souris ou doigt), play ou pas : prend le pas sur
+  // l'auto-scroll. Au relâcher, on replie la position dans basePos pour que
+  // le défilement automatique reprenne exactement là.
+  const pointerAxis = (e: React.PointerEvent) =>
+    modeRef.current === "horizontal" ? e.clientX : e.clientY;
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+    draggingRef.current = true;
+    movedRef.current = false;
+    dragStartRef.current = { pointer: pointerAxis(e), pos: currentPos() };
+    dragPosRef.current = dragStartRef.current.pos;
+  };
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!draggingRef.current) return;
+    const delta = pointerAxis(e) - dragStartRef.current.pointer;
+    if (Math.abs(delta) > 4) movedRef.current = true;
+    dragPosRef.current = dragStartRef.current.pos + delta;
+    applyTransform(dragPosRef.current);
+    highlight(dragPosRef.current);
+  };
+
+  const endDrag = (e: React.PointerEvent) => {
+    if (!draggingRef.current) return;
+    draggingRef.current = false;
+    (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
+    // Replier la position de glisse dans basePos : currentPos() doit valoir
+    // dragPos. basePos = dragPos + scrollPx + nudge.
+    const scrollPx = (clockRef.current.scrollElapsedMs() / 1000) * speedRef.current;
+    basePosRef.current = dragPosRef.current + scrollPx + nudgeAccumRef.current;
+  };
+
   let sylIdx = 0;
 
   return (
@@ -272,7 +315,11 @@ export default function Prompteur({
       ref={containerRef}
       onClick={onContainerClick}
       onWheel={onWheel}
-      style={{ cursor: playing ? "default" : "pointer" }}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
+      style={{ cursor: "grab", touchAction: "none" }}
     >
       <div className="marker" />
       <div
