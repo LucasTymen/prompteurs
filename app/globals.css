@@ -221,7 +221,7 @@ body.horizontal .text-container {
   transform-origin: center top;
 }
 
-body.horizontal .text-content {
+.text-content-horizontal {
   white-space: nowrap;
   text-align: left;
   width: auto;

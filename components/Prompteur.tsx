@@ -88,7 +88,11 @@ export default function Prompteur({
   const initialPos = () => {
     const c = containerRef.current;
     if (!c) return 0;
-    return modeRef.current === "horizontal" ? c.offsetWidth / 2 : c.offsetHeight / 2;
+    if (modeRef.current === "horizontal") {
+      const firstWordStart = sylRefs.current[0]?.offsetLeft ?? 0;
+      return c.offsetWidth / 2 - firstWordStart;
+    }
+    return c.offsetHeight / 2;
   };
 
   // Position effective courante (px), calculée depuis la clock + nudge.
@@ -328,7 +332,7 @@ export default function Prompteur({
       <div className="marker" />
       <div
         id="text"
-        className="text-content"
+        className={`text-content${mode === "horizontal" ? " text-content-horizontal" : ""}`}
         ref={textRef}
         style={{ fontSize: `${fontSize}px`, fontFamily }}
       >
