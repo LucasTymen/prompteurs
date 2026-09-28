@@ -20,6 +20,7 @@ const TEXT_KEY = "prompteur:text";
 
 type Settings = {
   mode: Mode;
+  prompterHeightRatio: number;
   fontSize: number;
   fontFamily: string;
   zoom: number;
@@ -38,6 +39,7 @@ type CountdownAction = "prompteur" | "enregistrement";
 
 const DEFAULTS: Settings = {
   mode: "vertical",
+  prompterHeightRatio: 0.32,
   fontSize: 32,
   fontFamily: "Arial",
   zoom: 1,
@@ -77,6 +79,7 @@ export default function Page() {
 
   // Affichage
   const [mode, setMode] = useState<Mode>(DEFAULTS.mode);
+  const [prompterHeightRatio, setPrompterHeightRatio] = useState(DEFAULTS.prompterHeightRatio);
   const [playing, setPlaying] = useState(false);
   const [fontSize, setFontSize] = useState(DEFAULTS.fontSize);
   const [fontFamily, setFontFamily] = useState(DEFAULTS.fontFamily);
@@ -102,6 +105,7 @@ export default function Page() {
     setText(t);
     setDraft(t);
     setMode(s.mode);
+    setPrompterHeightRatio(s.prompterHeightRatio);
     setFontSize(s.fontSize);
     setFontFamily(s.fontFamily);
     setZoom(s.zoom);
@@ -121,6 +125,7 @@ export default function Page() {
   const [resetSignal, setResetSignal] = useState(0);
   const [nudgeSignal, setNudgeSignal] = useState(0);
   const nudgeDirRef = useRef(1);
+  const resizeStartRef = useRef({ pointerY: 0, ratio: DEFAULTS.prompterHeightRatio });
 
   // Attaques sonores détectées par le spectrogramme, partagées avec le filigrane.
   const beatsRef = useRef<BeatMark[]>([]);
@@ -199,12 +204,12 @@ export default function Page() {
   // Persistance : sauvegarder les réglages à chaque changement.
   useEffect(() => {
     const settings: Settings = {
-      mode, fontSize, fontFamily, zoom, mirrored, manualSpeed,
+      mode, prompterHeightRatio, fontSize, fontFamily, zoom, mirrored, manualSpeed,
       musicEnabled, bpm, signatureLabel: signature.label, pxPerBeat,
       onThBeats, nearThBeats, startOffsetBeats,
     };
     try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch {}
-  }, [mode, fontSize, fontFamily, zoom, mirrored, manualSpeed, musicEnabled, bpm, signature, pxPerBeat, onThBeats, nearThBeats, startOffsetBeats]);
+  }, [mode, prompterHeightRatio, fontSize, fontFamily, zoom, mirrored, manualSpeed, musicEnabled, bpm, signature, pxPerBeat, onThBeats, nearThBeats, startOffsetBeats]);
 
   // Persistance du texte.
   const applyDraft = useCallback(() => {
@@ -239,6 +244,35 @@ export default function Page() {
     setCountdown(null);
     setMode((m) => (m === "vertical" ? "horizontal" : "vertical"));
   }, []);
+
+  const resizePrompter = (ratio: number) => {
+    setPrompterHeightRatio(Math.max(0.18, Math.min(0.75, ratio)));
+  };
+
+  const onResizePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    event.currentTarget.setPointerCapture(event.pointerId);
+    resizeStartRef.current = { pointerY: event.clientY, ratio: prompterHeightRatio };
+  };
+
+  const onResizePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
+    const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+    resizePrompter(resizeStartRef.current.ratio + (event.clientY - resizeStartRef.current.pointerY) / viewportHeight);
+  };
+
+  const onResizeKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    const step = event.shiftKey ? 0.08 : 0.03;
+    if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+      event.preventDefault();
+      resizePrompter(prompterHeightRatio + (event.key === "ArrowUp" ? step : -step));
+    } else if (event.key === "Home") {
+      event.preventDefault();
+      resizePrompter(0.18);
+    } else if (event.key === "End") {
+      event.preventDefault();
+      resizePrompter(0.75);
+    }
+  };
 
   useEffect(() => {
     document.body.classList.toggle("horizontal", mode === "horizontal");
@@ -353,27 +387,43 @@ export default function Page() {
       <div className="app">
         <Header onTheme={toggleTheme} onFullscreen={toggleFullscreen} />
 
-        <main className="prompter-stage">
-          <Metronome clock={clock} beatsPerMeasure={signature.beats} enabled={musicEnabled} />
-          <Prompteur
-            text={text}
-            mode={mode}
-            playing={playing}
-            fontSize={fontSize}
-            fontFamily={fontFamily}
-            zoom={zoom}
-            mirrored={mirrored}
-            clock={clock}
-            speedPxPerSec={speedPxPerSec}
-            pxPerBeat={pxPerBeat}
-            onThBeats={onThBeats}
-            nearThBeats={nearThBeats}
-            resetSignal={resetSignal}
-            nudgeSignal={nudgeSignal}
-            nudgeDir={nudgeDirRef.current}
+        <section className="prompter-region" aria-label="Prompteur">
+          <main className="prompter-stage" style={{ "--prompter-height": `${prompterHeightRatio * 100}dvh` } as React.CSSProperties}>
+            <Metronome clock={clock} beatsPerMeasure={signature.beats} enabled={musicEnabled} />
+            <Prompteur
+              text={text}
+              mode={mode}
+              playing={playing}
+              fontSize={fontSize}
+              fontFamily={fontFamily}
+              zoom={zoom}
+              mirrored={mirrored}
+              clock={clock}
+              speedPxPerSec={speedPxPerSec}
+              pxPerBeat={pxPerBeat}
+              onThBeats={onThBeats}
+              nearThBeats={nearThBeats}
+              resetSignal={resetSignal}
+              nudgeSignal={nudgeSignal}
+              nudgeDir={nudgeDirRef.current}
+            />
+            <RhythmOverlay beatsRef={beatsRef} clock={clock} speedPxPerSec={speedPxPerSec} />
+          </main>
+
+          <div
+            className="prompter-resizer"
+            role="separator"
+            aria-label="Hauteur du cadre du prompteur"
+            aria-orientation="horizontal"
+            aria-valuemin={18}
+            aria-valuemax={75}
+            aria-valuenow={Math.round(prompterHeightRatio * 100)}
+            tabIndex={0}
+            onPointerDown={onResizePointerDown}
+            onPointerMove={onResizePointerMove}
+            onKeyDown={onResizeKeyDown}
           />
-          <RhythmOverlay beatsRef={beatsRef} clock={clock} speedPxPerSec={speedPxPerSec} />
-        </main>
+        </section>
 
         <Transport
           playing={playing}
@@ -483,8 +533,8 @@ export default function Page() {
           F = Plein écran · T = Thème · R = Reset · S = Synchro musique · B = Tap tempo
         </p>
 
-        {countdown !== null && <Countdown value={countdown} />}
       </div>
+      {countdown !== null && <Countdown value={countdown} />}
     </>
   );
 }
